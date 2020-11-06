@@ -1,0 +1,422 @@
+---
+title: "Climate Change"
+author: "Helena Lindsay"
+date: "10/19/2020"
+output:
+  html_document:
+    toc: TRUE
+    theme: journal
+    toc_float: TRUE
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#install.packages("striprtf")
+library(striprtf)
+library(dplyr)
+#install.packages("tidytext")
+library(tidytext)
+#install.packages("textdata")
+library(textdata)
+library(ggplot2)
+library(reshape2)
+```
+
+## Example News Sources {.tabset}
+
+### Tampa Bay Times (Florida)
+```{r}
+
+TB.Time <- read_rtf("TBT.RTF")
+TB.Times <- tibble(TB.Time)
+TB.Times$text <- TB.Times$TB.Time
+
+
+TBT.words <- TB.Times %>%
+  unnest_tokens(word, text)%>%
+  anti_join(stop_words) %>%
+  count(word, sort=TRUE)
+
+```
+
+```{r}
+TBT_sentiment_affin <- TBT.words %>%
+  inner_join(get_sentiments("afinn"))
+
+TBT_sentiment_nrc <- TBT.words %>%
+  inner_join(get_sentiments("nrc"))
+
+TBT_sentiment_bing <- TBT.words %>%
+  inner_join(get_sentiments("bing"))
+```
+
+```{r}
+ggplot(TBT_sentiment_affin, aes(x=value)) + geom_bar() + scale_x_continuous(breaks = seq(-4, 4, 1))
+```
+
+From this visualization, we can see that there are more negative-sentiment words than positive sentiment words in articles related to climate change in the Tampa Bay Times.
+
+```{r}
+TBT_bing_table <- table(TBT_sentiment_bing$sentiment)
+TBT_bing_table
+```
+
+```{r}
+TBT_nrc_table <- table(TBT_sentiment_nrc$sentiment)
+TBT_nrc_table
+```
+
+
+```{r}
+affin_bing_join <- left_join(TBT_sentiment_affin, TBT_sentiment_bing)
+affin_bing_join$bing_sentiment <- affin_bing_join$sentiment
+affin_bing_join <- affin_bing_join[-c(4)]
+sentiment_joined <- left_join(affin_bing_join, TBT_sentiment_nrc)
+sentiment_joined$nrc_sentiment <- sentiment_joined$sentiment
+sentiment_joined <- sentiment_joined[-c(5)]
+sentiment_joined <- na.omit(sentiment_joined)
+
+ggplot(sentiment_joined, aes(x = nrc_sentiment, fill = bing_sentiment)) + geom_bar()
+```
+
+This visualization reinforces the notion that articles in the Tampa Bay Times tend to contain negative sentiment when it comes to climate change-related articles. From the various sentiment categories expressed in the x-axis, we can see that the bars for negative sentiment are larger and more pronounced than those for positive sentiment.
+
+
+### LA Times (California){.bs-callout .bs-callout-orange}
+```{r}
+
+LA.Times <- read_rtf("LATimes.RTF")
+LA.Times <- tibble(LA.Times)
+LA.Times$text <- LA.Times$LA.Times
+
+LA.Times.words <- LA.Times %>%
+  unnest_tokens(word, text)%>%
+  anti_join(stop_words) %>%
+  count(word, sort=TRUE)
+```
+
+```{r}
+LAT_sentiment_affin <- LA.Times.words %>%
+  inner_join(get_sentiments("afinn"))
+
+
+LAT_sentiment_nrc <- LA.Times.words %>%
+  inner_join(get_sentiments("nrc"))
+
+LAT_sentiment_bing <- LA.Times.words %>%
+  inner_join(get_sentiments("bing"))
+```
+
+```{r}
+ggplot(LAT_sentiment_affin, aes(x=value)) + geom_bar() + scale_x_continuous(breaks = seq(-4, 4, 1))
+```
+
+From this visualization, we can see that the LA Times tends towards negative sentiment in articles related to climate change. When summarizing the count of positive and negative sentiment words in the articles, we see that there are almost twice as many negative-sentiment words (1169) as there are positive-sentiment words (590).
+
+```{r}
+LAT_bing_table <- table(LAT_sentiment_bing$sentiment)
+LAT_bing_table
+```
+
+```{r}
+LAT_nrc_table <- table(LAT_sentiment_nrc$sentiment)
+LAT_nrc_table
+```
+
+```{r}
+affin_bing_join_LAT <- left_join(LAT_sentiment_affin, LAT_sentiment_bing)
+affin_bing_join_LAT$bing_sentiment <- affin_bing_join_LAT$sentiment
+affin_bing_join_LAT <- affin_bing_join_LAT[-c(4)]
+sentiment_joined_LAT <- left_join(affin_bing_join_LAT, LAT_sentiment_nrc)
+sentiment_joined_LAT$nrc_sentiment <- sentiment_joined_LAT$sentiment
+sentiment_joined_LAT <- sentiment_joined_LAT[-c(5)]
+sentiment_joined_LAT <- na.omit(sentiment_joined_LAT)
+
+ggplot(sentiment_joined_LAT, aes(x = nrc_sentiment, fill = bing_sentiment)) + geom_bar()
+```
+
+This joined sentiment visualization echoes that of the Tampa Bay Times with climate-change-related articles containing overwhelmingly more negative sentiment than positive sentiment. However, the words from the LA Times articles have a slightly greater positive sentiment in association with negative emotions. For example, the NRC Emotion for negative has a greater (and thus more positive) Bing lexicon score as seen by the larger teal area in the bar for "negative" in the LA Times plot.
+
+### Star Tribune (Minnesota){.bs-callout .bs-callout-green}
+```{r}
+
+Star.Tribune <- read_rtf("Star Tribune.RTF")
+Star.Tribune <- tibble(Star.Tribune)
+Star.Tribune$text <- Star.Tribune$Star.Tribune
+
+Star.Tribune.words <- Star.Tribune %>%
+  unnest_tokens(word, text)%>%
+  anti_join(stop_words) %>%
+  count(word, sort=TRUE)
+```
+
+```{r}
+Star_sentiment_affin <- Star.Tribune.words %>%
+  inner_join(get_sentiments("afinn"))
+
+
+Star_sentiment_nrc <- LA.Times.words %>%
+  inner_join(get_sentiments("nrc"))
+
+Star_sentiment_bing <- LA.Times.words %>%
+  inner_join(get_sentiments("bing"))
+```
+
+```{r}
+ggplot(Star_sentiment_affin, aes(x=value)) + geom_bar() + scale_x_continuous(breaks = seq(-4, 5, 1))
+```
+
+From this visualization, we can see that the Star Tribune tends towards negative sentiment in articles related to climate change. When summarizing the count of positive and negative sentiment words in the articles, we see that there are almost twice as many negative-sentiment words (1169) as there are positive-sentiment words (590).
+
+```{r}
+Star_bing_table <- table(Star_sentiment_bing$sentiment)
+Star_bing_table
+```
+
+```{r}
+Star_nrc_table <- table(Star_sentiment_nrc$sentiment)
+Star_nrc_table
+```
+
+```{r}
+affin_bing_join_Star <- left_join(Star_sentiment_affin, Star_sentiment_bing)
+affin_bing_join_Star$bing_sentiment <- affin_bing_join_Star$sentiment
+affin_bing_join_Star <- affin_bing_join_Star[-c(4)]
+sentiment_joined_Star <- left_join(affin_bing_join_Star, Star_sentiment_nrc)
+sentiment_joined_Star$nrc_sentiment <- sentiment_joined_Star$sentiment
+sentiment_joined_Star <- sentiment_joined_Star[-c(5)]
+sentiment_joined_Star <- na.omit(sentiment_joined_Star)
+
+ggplot(sentiment_joined_Star, aes(x = nrc_sentiment, fill = bing_sentiment)) + geom_bar()
+```
+
+This joined sentiment visualization is once again similar to those of the Tampa Bay Times and the LA Times, however there are some more pronounced differences here. In the NRC Emotion "positive", the Bing lexicon score was entirely positive whereas the prior two newspapers contained some negative Bing scores for the same emotion. Additionally, the NRC Emotions for "trust" and "joy" are also entirely positive on the Bing scale. The typically negative NRC Emotions such as "disgust", "fear", and "sadness" also see a greater positive score on the Bing scale for the Star Tribune as compared to the Tampa Bay Times and LA Times.
+
+
+### New York Times (New York){.bs-callout .bs-callout-gray}
+```{r}
+
+NYT <- read_rtf("NYT.RTF")
+NYT <- tibble(NYT)
+NYT$text <- NYT$NYT
+
+NYT.words <- NYT %>%
+  unnest_tokens(word, text)%>%
+  anti_join(stop_words) %>%
+  count(word, sort=TRUE)
+```
+
+```{r}
+NYT_sentiment_affin <- NYT.words %>%
+  inner_join(get_sentiments("afinn"))
+
+
+NYT_sentiment_nrc <- NYT.words %>%
+  inner_join(get_sentiments("nrc"))
+
+NYT_sentiment_bing <- NYT.words %>%
+  inner_join(get_sentiments("bing"))
+```
+
+```{r}
+ggplot(NYT_sentiment_affin, aes(x=value)) + geom_bar() + scale_x_continuous(breaks = seq(-4, 5, 1))
+```
+
+From this visualization, we can see that the New York Times tends towards negative sentiment in articles related to climate change. When summarizing the count of positive and negative sentiment words in the articles, we see that there are almost twice as many negative-sentiment words (1118) as there are positive-sentiment words (594).
+
+```{r}
+NYT_bing_table <- table(NYT_sentiment_bing$sentiment)
+NYT_bing_table
+```
+
+```{r}
+NYT_nrc_table <- table(NYT_sentiment_nrc$sentiment)
+NYT_nrc_table
+```
+
+```{r}
+affin_bing_join_NYT <- left_join(NYT_sentiment_affin, NYT_sentiment_bing)
+affin_bing_join_NYT$bing_sentiment <- affin_bing_join_NYT$sentiment
+affin_bing_join_NYT <- affin_bing_join_NYT[-c(4)]
+sentiment_joined_NYT <- left_join(affin_bing_join_NYT, NYT_sentiment_nrc)
+sentiment_joined_NYT$nrc_sentiment <- sentiment_joined_NYT$sentiment
+sentiment_joined_NYT <- sentiment_joined_NYT[-c(5)]
+sentiment_joined_NYT <- na.omit(sentiment_joined_NYT)
+
+ggplot(sentiment_joined_NYT, aes(x = nrc_sentiment, fill = bing_sentiment)) + geom_bar()
+```
+
+This joined sentiment visualization echoes that of the LA Times with climate-change-related articles containing overwhelmingly more negative sentiment than positive sentiment. Similar to the LA Times joined sentiment visualization, we can see that the NY Times articles related to climate change have a slightly greater positive sentiment in association with negative emotions. However, when comparing the NRC Emotion "trust" to that of the LA Times, the NY Times has a greater and more positive Bing lexicon score as evidenced by the slightly greater level of teal in the bar for "trust". 
+
+### Portland Press (Oregon){.bs-callout .bs-callout-yellow}
+```{r}
+
+Port.Press <- read_rtf("Portland Press Herald.RTF")
+Port.Press <- tibble(Port.Press)
+Port.Press$text <- Port.Press$Port.Press
+
+Port.Press.words <- Port.Press %>%
+  unnest_tokens(word, text)%>%
+  anti_join(stop_words) %>%
+  count(word, sort=TRUE)
+```
+
+
+```{r}
+PP_sentiment_affin <- Port.Press.words %>%
+  inner_join(get_sentiments("afinn"))
+
+
+PP_sentiment_nrc <- Port.Press.words %>%
+  inner_join(get_sentiments("nrc"))
+
+PP_sentiment_bing <- Port.Press.words %>%
+  inner_join(get_sentiments("bing"))
+```
+
+```{r}
+ggplot(PP_sentiment_affin, aes(x=value)) + geom_bar() + scale_x_continuous(breaks = seq(-4, 5, 1))
+```
+
+From this visualization, we can see that the Portland Press tends towards negative sentiment in articles related to climate change. Compared to the other sources, the count of positive (384) and negative (538) sentiments were both very low. Since we equally took 100 articles from each source, the low positive and negative sentiments is unlikely to be due to the amount of text data being analyzed, but perhaps because the Portland Press uses more neutral and descriptive words, or words that cannot easily be associated with positive nor negative sentiments.
+
+
+```{r}
+PP_bing_table <- table(PP_sentiment_bing$sentiment)
+PP_bing_table
+```
+
+```{r}
+PP_nrc_table <- table(PP_sentiment_nrc$sentiment)
+PP_nrc_table
+```
+ 
+
+```{r}
+affin_bing_join_PP <- left_join(PP_sentiment_affin, PP_sentiment_bing)
+affin_bing_join_PP$bing_sentiment <- affin_bing_join_PP$sentiment
+affin_bing_join_PP <- affin_bing_join_PP[-c(4)]
+sentiment_joined_PP <- left_join(affin_bing_join_PP, PP_sentiment_nrc)
+sentiment_joined_PP$nrc_sentiment <- sentiment_joined_PP$sentiment
+sentiment_joined_PP <- sentiment_joined_PP[-c(5)]
+sentiment_joined_PP <- na.omit(sentiment_joined_PP)
+
+ggplot(sentiment_joined_PP, aes(x = nrc_sentiment, fill = bing_sentiment)) + geom_bar()
+```
+
+This visualization reinforces the notion that articles in the Portland Press tend to contain negative sentiment when it comes to climate change-related articles. From the various sentiment categories expressed in the x-axis, we can see that the bars for negative sentiment are larger and more pronounced than those for positive sentiment.
+The plot closely resembles that of the New York Times, other than the fact that there is a higher negative Bing lexicon score for "anticipation" as evidenced by the slightly greater level of teal in the bar for "anticipation". 
+
+### St. Louis Dispatch (Missouri){.bs-callout .bs-callout-red}
+```{r}
+
+StL.Dispatch <- read_rtf("StLouis Dispatch.RTF")
+StL.Dispatch <- tibble(StL.Dispatch)
+StL.Dispatch$text <- StL.Dispatch$StL.Dispatch
+
+StL.Dispatch.words <- StL.Dispatch %>%
+  unnest_tokens(word, text)%>%
+  anti_join(stop_words) %>%
+  count(word, sort=TRUE)
+```
+
+```{r}
+StL_sentiment_affin <- StL.Dispatch.words %>%
+  inner_join(get_sentiments("afinn"))
+StL_sentiment_nrc <- StL.Dispatch.words %>%
+  inner_join(get_sentiments("nrc"))
+StL_sentiment_bing <- StL.Dispatch.words %>%
+  inner_join(get_sentiments("bing"))
+
+ggplot(StL_sentiment_affin, aes(x=value)) + geom_bar() + scale_x_continuous(breaks = seq(-4, 4, 1))
+```
+
+From this visualization, we can see that there are more negative-sentiment words than positive sentiment words in articles related to climate change in the st.Louis Dispatch. When summarizing the count of positive and negative sentiment words in the articles, we see that there are significantly more negative-sentiment words (675) compared to positive-sentiment words (367).
+Similar to the Portland Press, the count of positive and negative sentiments were both very low, and thus raises the possibility that the St. Louis Dispatch uses more neutral and descriptive words over words that can easily be associated with positive or negative sentiments.
+
+
+```{r}
+StL_bing_table <- table(StL_sentiment_bing$sentiment)
+StL_bing_table
+```
+
+```{r}
+StL_nrc_table <- table(StL_sentiment_nrc$sentiment)
+StL_nrc_table
+```
+
+```{r}
+affin_bing_join_StL <- left_join(StL_sentiment_affin, StL_sentiment_bing)
+affin_bing_join_StL$bing_sentiment <- affin_bing_join_StL$sentiment
+affin_bing_join_StL <- affin_bing_join_StL[-c(4)]
+sentiment_joined_StL <- left_join(affin_bing_join_StL, StL_sentiment_nrc)
+sentiment_joined_StL$nrc_sentiment <- sentiment_joined_StL$sentiment
+sentiment_joined_StL <- sentiment_joined_StL[-c(5)]
+sentiment_joined_StL <- na.omit(sentiment_joined_StL)
+
+ggplot(sentiment_joined_StL, aes(x = nrc_sentiment, fill = bing_sentiment)) + geom_bar()
+```
+
+This visualization reinforces the notion that articles in the St. Louis Dispatch tend to contain negative sentiment when it comes to climate change-related articles. Similar to the Portland Press, this visualization also resembles that of NY Times, but with a slightly lower positive sentiment in association with negative emotions. 
+
+## Sentiment Comparison {.tabset}
+
+### Bing sentiment comparison
+```{r}
+bing_df <- data.frame(rbind(TBT_bing_table, LAT_bing_table, Star_bing_table, NYT_bing_table, PP_bing_table, StL_bing_table))
+newspapers <- c("TBT", "LAT", "Star", "NYT", "PP", "StL")
+bing_df <- cbind(newspapers, bing_df)
+rownames(bing_df) <- NULL
+bing_df <- melt(bing_df)
+colnames(bing_df) <- c("newspapers", "sentiment", "count")
+ggplot(bing_df, aes(newspapers, count, fill = sentiment)) + geom_bar(stat="identity", position = "dodge")
+```
+This bar chart compares the number of positive and negative sentiment of each newspaper. Every newspaper had more negative sentiment than positive sentiment, with the LA Times, New York Times, and Star Tribune having a much larger gap between positive and negative sentiment than the Portland Press, St Louis Post-Dispatch, and Tampa Bay Times. 
+
+### NRC sentiment comparison
+```{r}
+nrc_df <- data.frame(rbind(TBT_nrc_table, LAT_nrc_table, Star_nrc_table, NYT_nrc_table, PP_nrc_table, StL_nrc_table))
+newspapers <- c("TBT", "LAT", "Star", "NYT", "PP", "StL")
+nrc_df <- cbind(newspapers, nrc_df)
+rownames(nrc_df) <- NULL
+nrc_df <- melt(nrc_df)
+colnames(nrc_df) <- c("newspapers", "sentiment", "count")
+ggplot(nrc_df, aes(newspapers, count, fill = sentiment)) + geom_bar(stat="identity", position = "stack")
+```
+This barchart compares the nrc sentiment used by each newspaper. While the counts are different for each newspaper, the distribution of the different sentiments is relatively similar.
+
+## Summary
+This project explored historical news articles from around the country in a effort to track the relative positive or negative sentiment associated with articles that focus on "Climate Change."
+
+The 6 news sources we chose from around the country were 
+
+  1. Tampa Bay Times (Florida)
+  2. LA Times (California)
+  3. Star Tribune (Minnesota)
+  4. New York Times (New York)
+  5. Portland Press (Oregon)
+  6. St. Louis Dispatch (Missouri)
+
+Through sentiment analysis on the 100 articles taken from each news source, we found that there were more negative sentiments associated with environmental related issues in all 6 news sources in various states. 
+
+Out of the 6 sources, Star Tribune (Minnesota) had the highest positive sentiment in association with negative emotions, with a slightly greater level of teal in the bar for "anger", "disgust", "fear" and "trust". 
+Both the Tampa Bay Times (Florida) and St. Louis Dispatch (Missouri) had a significantly low positive sentiment in association with negative emotions, with a low level of teal in the bar for "anger", "disgust", "fear" and "trust".
+
+From these outcomes, to further support environmental policies agendas, the lobbying firm should invest dollars in regions that have a high support rate, which would be Minnesota and possibly New York, since it had a greater and more positive Bing lexicon score for "trust". Ths high positive Bing lexicon score for "trust" shows the possible trait of the citizens trusting officials in decision-making regarding environmental issues, and thus the effect of lobbying may be larger than some other states.
+
+Finally, there are some points we need to be careful of when analyzing the outcomes. For example, the words "rising", "sea", and "level" are all considered positive sentiments, when in the context of "rising sea level" , which is how these words are used in the articles, should be analyzed as having more of a negative meaning.
+
+
+
+
+
+
+
+
+
+
+
+
+
