@@ -1,4 +1,3 @@
-# textmining
 ---
 title: "Climate Change"
 author: "Helena Lindsay"
